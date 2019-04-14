@@ -35,7 +35,7 @@ URL: http://www.gnutls.org/
 #Source0: ftp://ftp.gnutls.org/gcrypt/gnutls/%%{name}-%%{version}.tar.xz
 #Source1: ftp://ftp.gnutls.org/gcrypt/gnutls/%%{name}-%%{version}.tar.xz.sig
 # XXX patent tainted code removed.
-Source0: gnutls-%{version}-hobbled.tar.xz
+Source0: https://src.fedoraproject.org/repo/pkgs/gnutls/gnutls-%{version}-hobbled.tar.xz
 Source2: hobble-gnutls
 Patch1: gnutls-3.2.7-rpath.patch
 Patch3: gnutls-3.1.11-nosrp.patch
