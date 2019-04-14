@@ -5,8 +5,8 @@
 # Assure that sorting is case sensitive
 LANG=C
 
-#
-MOCKS+=epel-7-x86_64
+# Requires compat-nettle32
+MOCKS+=samba4repo-7-x86_64
 
 # repositories to touch after installation
 MOCKCFGS+=samba4repo-7-x86_64
