@@ -62,6 +62,8 @@ Requires: pkgconfig
 Requires: libtasn1-devel >= 4.3
 Requires: libidn-devel
 Requires: p11-kit-devel >= 0.21.3
+# Report RHEL conflict
+Conflicts: gnutls-devel
 Requires(post): /sbin/install-info
 Requires(preun): /sbin/install-info
 
@@ -274,6 +276,9 @@ make check %{?_smp_mflags}
 %endif
 
 %changelog
+* Wed Apr 17 2019 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0
+- Add Conflicts gnutls-devel
+
 * Thu Feb 21 2019 Sérgio Basto <sergio@serjux.com> - 3.4.17-5
 - Devel package need libtasn1-devel, libtasn1-devel, libidn-devel
   and p11-kit-devel
