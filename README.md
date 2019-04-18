@@ -14,7 +14,9 @@ for Samba compilation See this URL for the layout.
 compat-gnutls34 requires compat-nettle32 from the same location.
 compat-gnutls34 is needed to build a compat-gnutls34 on RHEL 7.
 
-To build it locally, first instlal compat-nettle32 on RHEL 7 and use:
+To build it locally, first obtain the tarball from the Source:
+location in the .spec file. Then install compat-nettle32 on RHEL 7 and
+use:
 
    make build
 
