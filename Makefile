@@ -11,9 +11,12 @@ MOCKS+=samba4repo-7-x86_64
 #REPOBASEDIR=/var/www/linux/samba4repo
 REPOBASEDIR:=`/bin/pwd`/../samba4repo
 
-SPEC := compat-gnutls34.spec
+SPEC := `ls *.spec`
 
 all:: $(MOCKS)
+
+getsrc:: FORCE
+	spectool -g $(SPEC)
 
 srpm:: FORCE
 	@echo "Building SRPM with $(SPEC)"
