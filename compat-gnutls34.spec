@@ -4,7 +4,7 @@
 Summary: A TLS protocol implementation
 Name: compat-gnutls34
 Version: 3.4.17
-Release: 0%{?dist}
+Release: 0.1%{?dist}
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
 Group: System Environment/Libraries
@@ -189,42 +189,46 @@ autoreconf -v
 %install
 %make_install
 
-mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
-mv $RPM_BUILD_ROOT%{_includedir}/gnutls $RPM_BUILD_ROOT%{_includedir}/%{name}/
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls.pc
-#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/nettle.pc
-#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/hogweed.pc
+%{__install} -d $RPM_BUILD_ROOT%{_includedir}/%{name}
+%{__mv} $RPM_BUILD_ROOT%{_includedir}/gnutls $RPM_BUILD_ROOT%{_includedir}/%{name}/
+%{__install} -d $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+%{__mv} $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+%{__sed} -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls.pc
+#%%{__sed} -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/nettle.pc
+#%%{__sed} -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/hogweed.pc
 
 # Rename or delete bin files to avoid conflicts with base packages
-#mv $RPM_BUILD_ROOT%{_infodir}/nettle.info $RPM_BUILD_ROOT%{_infodir}/nettle-3.2.info
-rm -f $RPM_BUILD_ROOT%{_bindir}/srptool
-rm -f $RPM_BUILD_ROOT%{_bindir}/gnutls-srpcrypt
-#cp -f %{SOURCE1} $RPM_BUILD_ROOT/%{_bindir}/libgnutls-config
-rm -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
-rm -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
-# rm -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
-# rm -f $RPM_BUILD_ROOT%{_infodir}/dir
+#%%{__mv} $RPM_BUILD_ROOT%{_infodir}/nettle.info $RPM_BUILD_ROOT%{_infodir}/nettle-3.2.info
+%{__rm} -f $RPM_BUILD_ROOT%{_bindir}/srptool
+%{__rm} -f $RPM_BUILD_ROOT%{_bindir}/gnutls-srpcrypt
+#%%{__cp} -f %{SOURCE1} $RPM_BUILD_ROOT/%{_bindir}/libgnutls-config
+%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
+%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
+# %%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
+# %%{__rm} -f $RPM_BUILD_ROOT%{_infodir}/dir
 # all 
-rm -f $RPM_BUILD_ROOT%{_mandir}/man3/*
-rm -f $RPM_BUILD_ROOT%{_infodir}/*
-rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
-rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.a
-rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
-rm -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
+%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*
+%{__rm} -f $RPM_BUILD_ROOT%{_infodir}/*
+%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/*.la
+%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.a
+%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
+%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
 %if %{with dane}
 mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
 sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls-dane.pc
 %else
-rm -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
+%{__rm} -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
 %endif
 
 #mkdir -p $RPM_BUILD_ROOT/etc/ld.so.conf.d/
 #install %{SOURCE3} $RPM_BUILD_ROOT/etc/ld.so.conf.d/compat-gnutls34.conf
 
 %find_lang gnutls
-rm -f $RPM_BUILD_ROOT/usr/share/locale/*/LC_MESSAGES/gnutls.mo
+%{__rm} -f $RPM_BUILD_ROOT/usr/share/locale/*/LC_MESSAGES/gnutls.mo
+
+# Set up symlinks to deault use compat version of gnutls
+echo %{__ln_s} -f %{name}/gnutls $RPM_BUILD_ROOT%{_includedir}/gnutls
+%{__ln_s} -f %{name}/gnutls $RPM_BUILD_ROOT%{_includedir}/gnutls
 
 %check
 make check %{?_smp_mflags}
@@ -253,6 +257,8 @@ make check %{?_smp_mflags}
 %{_libdir}/libgnutls*.so
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/pkgconfig/*.pc
+# Symlink for default compilation of compat release
+%{_includedir}/gnutls
 #/usr/gnutls34/share/*
 #{_mandir}/man3/*
 #{_infodir}/*
@@ -277,6 +283,10 @@ make check %{?_smp_mflags}
 %endif
 
 %changelog
+* Sat Aug 24 2019 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0.1
+- Add symlink at /usr/include/gnutls to provide consistent compilation
+  for Samba
+
 * Wed Apr 17 2019 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0
 - Add Conflicts gnutls-devel
 
