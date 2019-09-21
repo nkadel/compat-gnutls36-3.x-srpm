@@ -8,6 +8,12 @@ Release: 0.1%{?dist}
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
 Group: System Environment/Libraries
+
+%if (0%{?rhel > 0 && 0%{?rhel} <= 7)
+# Addresses python36- versus python3- dependencies
+BuildRequires: epel-rpm-macros
+%endif
+
 BuildRequires: p11-kit-devel >= 0.21.3, gettext-devel
 BuildRequires: zlib-devel, readline-devel, libtasn1-devel >= 4.3
 BuildRequires: libtool, automake, autoconf, texinfo
