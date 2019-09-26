@@ -9,7 +9,7 @@ Release: 0.1%{?dist}
 License: GPLv3+ and LGPLv2+
 Group: System Environment/Libraries
 
-%if (0%{?rhel} > 0 && 0%{?rhel} <= 7)
+%if 0%{?rhel} > 0
 # Addresses python36- versus python3- dependencies
 BuildRequires: epel-rpm-macros
 %endif

@@ -8,6 +8,8 @@ LANG=C
 # Requires compat-nettle32
 MOCKS+=samba4repo-7-x86_64
 
+MOCKCFGS+=$(MOCKS)
+
 #REPOBASEDIR=/var/www/linux/samba4repo
 REPOBASEDIR:=`/bin/pwd`/../samba4repo
 
@@ -62,6 +64,10 @@ install:: $(MOCKS)
 	    echo "Pushing RPMS to $$rpmdir"; \
 	    rsync -av $$repo/*.rpm --exclude=*.src.rpm --exclude=*debuginfo*.rpm --no-owner --no-group $$repo/*.rpm $$rpmdir/. || exit 1; \
 	    createrepo -q $$rpmdir/.; \
+	done
+	@for repo in $(MOCKCFGS); do \
+	    echo "Touching $(PWD)/../$$repo.cfg"; \
+	    /bin/touch --no-dereference $(PWD)/../$$repo.cfg; \
 	done
 
 clean::
