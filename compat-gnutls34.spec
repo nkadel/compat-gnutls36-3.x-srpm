@@ -4,15 +4,11 @@
 Summary: A TLS protocol implementation
 Name: compat-gnutls34
 Version: 3.4.17
-Release: 0.1%{?dist}
+#Release: 7%%{?dist}
+Release: 0.2%{?dist}
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
 Group: System Environment/Libraries
-
-%if 0%{?rhel} > 0
-# Addresses python36- versus python3- dependencies
-BuildRequires: epel-rpm-macros
-%endif
 
 BuildRequires: p11-kit-devel >= 0.21.3, gettext-devel
 BuildRequires: zlib-devel, readline-devel, libtasn1-devel >= 4.3
@@ -49,6 +45,9 @@ Patch3: gnutls-3.1.11-nosrp.patch
 Patch4: gnutls-3.4.1-default-policy.patch
 Patch5: gnutls-3.4.2-no-now-guile.patch
 Patch6: gnutls-3.4.17-various-flaws1.patch
+Patch7: 36_CVE-2017-7507_1-ext-status_request-ensure-response-IDs-are-properly-.patch
+Patch8: 36_CVE-2017-7507_2-ext-status_request-Removed-the-parsing-of-responder-.patch
+Patch9: 36_CVE-2017-7507_3-gnutls_ocsp_status_request_enable_client-documented-.patch
 
 # Wildcard bundling exception https://fedorahosted.org/fpc/ticket/174
 Provides: bundled(gnulib) = 20130424
@@ -158,12 +157,15 @@ This package contains Guile bindings for the library.
 %patch4 -p1 -b .default-policy
 %patch5 -p1 -b .guile
 %patch6 -p1 -b .various-flaws
+%patch7 -p1 -b .36_CVE-2017-7507_1
+%patch8 -p1 -b .36_CVE-2017-7507_2
+%patch9 -p1 -b .36_CVE-2017-7507_3
 
-sed 's/gnutls_srp.c//g' -i lib/Makefile.in
-sed 's/gnutls_srp.lo//g' -i lib/Makefile.in
-sed -i -e 's|sys_lib_dlsearch_path_spec="/lib /usr/lib|sys_lib_dlsearch_path_spec="/lib /usr/lib %{_libdir}|g' configure
-rm -f lib/minitasn1/*.c lib/minitasn1/*.h
-rm -f src/libopts/*.c src/libopts/*.h src/libopts/compat/*.c src/libopts/compat/*.h
+%{__sed} 's/gnutls_srp.c//g' -i lib/Makefile.in
+%{__sed} 's/gnutls_srp.lo//g' -i lib/Makefile.in
+%{__sed} -i -e 's|sys_lib_dlsearch_path_spec="/lib /usr/lib|sys_lib_dlsearch_path_spec="/lib /usr/lib %{_libdir}|g' configure
+%{__rm} -f lib/minitasn1/*.c lib/minitasn1/*.h
+%{__rm} -f src/libopts/*.c src/libopts/*.h src/libopts/compat/*.c src/libopts/compat/*.h
 
 %{SOURCE2} -e
 
@@ -210,8 +212,8 @@ autoreconf -v
 #%%{__cp} -f %{SOURCE1} $RPM_BUILD_ROOT/%{_bindir}/libgnutls-config
 %{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
 %{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
-# %%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
-# %%{__rm} -f $RPM_BUILD_ROOT%{_infodir}/dir
+#%%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
+#%%{__rm} -f $RPM_BUILD_ROOT%{_infodir}/dir
 # all 
 %{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*
 %{__rm} -f $RPM_BUILD_ROOT%{_infodir}/*
@@ -220,14 +222,14 @@ autoreconf -v
 %{__rm} -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
 %{__rm} -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
 %if %{with dane}
-mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls-dane.pc
+%{__mv} $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+%{__sed} -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls-dane.pc
 %else
 %{__rm} -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
 %endif
 
-#mkdir -p $RPM_BUILD_ROOT/etc/ld.so.conf.d/
-#install %{SOURCE3} $RPM_BUILD_ROOT/etc/ld.so.conf.d/compat-gnutls34.conf
+#%%{__install} -d $RPM_BUILD_ROOT/etc/ld.so.conf.d/
+#%%{__install} %%{SOURCE3} $RPM_BUILD_ROOT/etc/ld.so.conf.d/compat-gnutls34.conf
 
 %find_lang gnutls
 %{__rm} -f $RPM_BUILD_ROOT/usr/share/locale/*/LC_MESSAGES/gnutls.mo
@@ -289,12 +291,18 @@ make check %{?_smp_mflags}
 %endif
 
 %changelog
-* Sat Aug 24 2019 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0.1
+* Sat Sep 5 2020 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0.2
 - Add symlink at /usr/include/gnutls to provide consistent compilation
   for Samba
-
-* Wed Apr 17 2019 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0
 - Add Conflicts gnutls-devel
+= Use __rm, __sed, and __install consistently
+
+* Fri Aug 28 2020 Sérgio Basto <sergio@serjux.com> - 3.4.17-7
+- Add patches for GNUTLS-SA-2017-4/CVE-2017-7507
+
+* Fri Oct 25 2019 Sérgio Basto <sergio@serjux.com> - 3.4.17-6
+- compat-gnutls34-devel need requires compat-nettle32-devel or else pkg-config
+  gnutls won't work
 
 * Thu Feb 21 2019 Sérgio Basto <sergio@serjux.com> - 3.4.17-5
 - Devel package need libtasn1-devel, libtasn1-devel, libidn-devel
