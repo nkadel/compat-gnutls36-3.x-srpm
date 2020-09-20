@@ -13,7 +13,7 @@
 
 Name: compat-gnutls36
 Version: 3.6.8
-Release: 0.1%{?dist}
+Release: 0.2%{?dist}
 Summary: A TLS protocol implementation
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
@@ -21,7 +21,7 @@ Group: System Environment/Libraries
 URL: http://www.gnutls.org/
 Source0: ftp://ftp.gnutls.org/gcrypt/gnutls/v3.6/%{realname}-%{version}.tar.xz
 Source1: ftp://ftp.gnutls.org/gcrypt/gnutls/v3.6/%{realname}-%{version}.tar.xz.sig
-#Source2: gpgkey-1F42418905D8206AA754CCDC29EE58B996865171.gpg
+Source2: gpgkey-1F42418905D8206AA754CCDC29EE58B996865171.gpg
 Patch1:	gnutls-3.2.7-rpath.patch
 Patch2: gnutls-3.6.4-no-now-guile.patch
 Patch3: gnutls-3.6.5-fix-fips-signature-post.patch
@@ -199,7 +199,7 @@ This package contains Guile bindings for the library.
 %endif
 
 %prep
-#gpgv2 --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
+gpgv2 --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
 
 %autosetup -p1 -n %{realname}-%{version}
 
