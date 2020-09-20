@@ -1,54 +1,85 @@
+# gnutls-3.6.10 should need gmp-6.1 to solve undefined reference to `mpn_zero_p'
 %bcond_without dane
+%if 0%{?rhel}
+%bcond_with guile
+%bcond_with p11kit
+%else
 %bcond_without guile
+%bcond_without p11kit
+%endif
+%bcond_without fips
 
+%global realname gnutls
+Name: compat-gnutls36
+Version: 3.6.8
+Release: 0%{?dist}
 Summary: A TLS protocol implementation
-Name: compat-gnutls34
-Version: 3.4.17
-#Release: 7%%{?dist}
-Release: 0.2%{?dist}
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
 Group: System Environment/Libraries
+URL: http://www.gnutls.org/
+Source0: ftp://ftp.gnutls.org/gcrypt/gnutls/v3.6/%{realname}-%{version}.tar.xz
+Source1: ftp://ftp.gnutls.org/gcrypt/gnutls/v3.6/%{realname}-%{version}.tar.xz.sig
+#Source2: gpgkey-1F42418905D8206AA754CCDC29EE58B996865171.gpg
+Patch1:	gnutls-3.2.7-rpath.patch
+Patch2: gnutls-3.6.4-no-now-guile.patch
+Patch3: gnutls-3.6.5-fix-fips-signature-post.patch
+Patch4: gnutls-3.6.8-fips-aes-cbc-kat.patch
+# need --disable-tests
+#Patch5: gnutls-3.6.8-multiple-key-updates.patch
+Patch6: gnutls-3.6.8-fips-rng-continuous.patch
+Patch7: gnutls-3.6.8-session-ticket-ub.patch
+# need --disable-tests
+#Patch8: gnutls-3.6.8-pkcs11-login-error.patch
+# depends on patch8
+#Patch9: gnutls-3.6.8-fips-deterministic-ecdsa.patch
+# depends on patch8
+#Patch10: gnutls-3.6.8-aead-cipher-encryptv2.patch
+# depends on patch8
+#Patch11: gnutls-3.6.8-fips-rsa-random-selftests.patch
+# depends on patch8
+#Patch12: gnutls-3.6.8-decr-len.patch
+# depends on patch8
+#Patch13: gnutls-3.6.8-fix-aead-cipher-encryptv2.patch
+Patch14: gnutls-3.6.8-fix-cfb8-decrypt.patch
+Patch15: gnutls-3.6.12-dtls-random.patch
+Patch16: gnutls-3.6.14-totp-init.patch
 
-BuildRequires: p11-kit-devel >= 0.21.3, gettext-devel
-BuildRequires: zlib-devel, readline-devel, libtasn1-devel >= 4.3
-BuildRequires: libtool, automake, autoconf, texinfo
+BuildRequires: p11-kit-devel >= 0.21.3
+BuildRequires: gettext-devel
+BuildRequires: zlib-devel readline-devel libtasn1-devel >= 4.3
+#BuildRequires: libtool automake autoconf texinfo
 BuildRequires: autogen-libopts-devel >= 5.18 autogen
-%if 0%{?rhel}
-BuildRequires: compat-nettle32-devel >= 3.1.1
-%else
-BuildRequires: nettle32-devel >= 3.1.1
-%endif
+BuildRequires: pkgconfig(nettle) >= 3.4.1
+BuildRequires: pkgconfig(hogweed) >= 3.4.1
 BuildRequires: trousers-devel >= 0.3.11.2
-BuildRequires: libidn-devel
-BuildRequires: gperf, net-tools, softhsm, datefudge
+BuildRequires: libidn2-devel
+BuildRequires: libunistring-devel
+BuildRequires: gperf
+BuildRequires: net-tools
+BuildRequires: softhsm
+BuildRequires: datefudge
+BuildRequires: gnupg2
+%if %{with fips}
+BuildRequires: fipscheck
+%endif
 #Requires: crypto-policies
+
+# for a sanity check on cert loading
+BuildRequires: p11-kit-trust
+BuildRequires: ca-certificates
 Requires: p11-kit-trust
 Requires: libtasn1 >= 4.3
+#Requires: nettle >= 3.4.1
 Requires: trousers >= 0.3.11.2
 
 %if %{with dane}
-BuildRequires: unbound-devel unbound-libs
+BuildRequires: unbound-devel
+BuildRequires: unbound-libs
 %endif
 %if %{with guile}
 BuildRequires: guile-devel
 %endif
-URL: http://www.gnutls.org/
-#Source0: ftp://ftp.gnutls.org/gcrypt/gnutls/%%{name}-%%{version}.tar.xz
-#Source1: ftp://ftp.gnutls.org/gcrypt/gnutls/%%{name}-%%{version}.tar.xz.sig
-# XXX patent tainted code removed.
-Source0: https://src.fedoraproject.org/repo/pkgs/gnutls/gnutls-%{version}-hobbled.tar.xz/md5/0cd8440f8e463546937474fbc3eacb6a/gnutls-%{version}-hobbled.tar.xz
-
-Source2: hobble-gnutls
-Patch1: gnutls-3.2.7-rpath.patch
-Patch3: gnutls-3.1.11-nosrp.patch
-Patch4: gnutls-3.4.1-default-policy.patch
-Patch5: gnutls-3.4.2-no-now-guile.patch
-Patch6: gnutls-3.4.17-various-flaws1.patch
-Patch7: 36_CVE-2017-7507_1-ext-status_request-ensure-response-IDs-are-properly-.patch
-Patch8: 36_CVE-2017-7507_2-ext-status_request-Removed-the-parsing-of-responder-.patch
-Patch9: 36_CVE-2017-7507_3-gnutls_ocsp_status_request_enable_client-documented-.patch
-
 # Wildcard bundling exception https://fedorahosted.org/fpc/ticket/174
 Provides: bundled(gnulib) = 20130424
 
@@ -67,9 +98,7 @@ Requires: %{name}-dane%{?_isa} = %{version}-%{release}
 Requires: pkgconfig
 Requires: libtasn1-devel >= 4.3
 Requires: libidn-devel
-Requires: p11-kit-devel >= 0.21.3
-# Report RHEL conflict
-Conflicts: gnutls-devel
+Requires: nettle-devel >= 3.4.1
 Requires(post): /sbin/install-info
 Requires(preun): /sbin/install-info
 
@@ -150,93 +179,103 @@ This package contains Guile bindings for the library.
 %endif
 
 %prep
-%setup -q -n gnutls-%{version}
+#gpgv2 --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
 
-%patch1 -p1 -b .rpath
-%patch3 -p1 -b .nosrp
-%patch4 -p1 -b .default-policy
-%patch5 -p1 -b .guile
-%patch6 -p1 -b .various-flaws
-%patch7 -p1 -b .36_CVE-2017-7507_1
-%patch8 -p1 -b .36_CVE-2017-7507_2
-%patch9 -p1 -b .36_CVE-2017-7507_3
+%autosetup -p1 -n %{realname}-%{version}
 
-%{__sed} 's/gnutls_srp.c//g' -i lib/Makefile.in
-%{__sed} 's/gnutls_srp.lo//g' -i lib/Makefile.in
-%{__sed} -i -e 's|sys_lib_dlsearch_path_spec="/lib /usr/lib|sys_lib_dlsearch_path_spec="/lib /usr/lib %{_libdir}|g' configure
-%{__rm} -f lib/minitasn1/*.c lib/minitasn1/*.h
-%{__rm} -f src/libopts/*.c src/libopts/*.h src/libopts/compat/*.c src/libopts/compat/*.h
+sed -i -e 's|sys_lib_dlsearch_path_spec="/lib /usr/lib|sys_lib_dlsearch_path_spec="/lib /usr/lib %{_libdir}|g' configure
+rm -f lib/minitasn1/*.c lib/minitasn1/*.h
+rm -f src/libopts/*.c src/libopts/*.h src/libopts/compat/*.c src/libopts/compat/*.h
 
-%{SOURCE2} -e
+echo "SYSTEM=NORMAL" >> tests/system.prio
 
+# Note that we explicitly enable SHA1, as SHA1 deprecation is handled
+# via the crypto policies
 
 %build
-export PKG_CONFIG_PATH=/usr/lib64/compat-nettle32/pkgconfig/
-
+#CCASFLAGS="$CCASFLAGS -Wa,--generate-missing-build-notes=yes"
+#export CCASFLAGS
+#rm -rf build-aux/ m4/
+#autoreconf -i
 autoreconf -v
-%configure --disable-static \
-        --disable-openssl-compatibility \
-        --disable-srp-authentication \
-        --disable-non-suiteb-curves \
-        --with-system-priority-file=%{_sysconfdir}/crypto-policies/back-ends/gnutls.config \
-        --with-default-trust-store-pkcs11="pkcs11:model=p11-kit-trust;manufacturer=PKCS%2311%20Kit" \
-        --with-trousers-lib=%{_libdir}/libtspi.so.1 \
+%configure \
+    --disable-static \
+%if %{with fips}
+    --enable-fips140-mode \
+%endif
+    --enable-sha1-support \
+    --disable-non-suiteb-curves \
+    --disable-openssl-compatibility \
+    --with-system-priority-file=%{_sysconfdir}/crypto-policies/back-ends/gnutls.config \
+    --with-trousers-lib=%{_libdir}/libtspi.so.1 \
+    --htmldir=%{_docdir}/%{name} \
 %if %{with guile}
-           --enable-guile \
+    --enable-guile \
 %else
-           --disable-guile \
+    --disable-guile \
+%endif
+%if %{with p11kit}
+    --with-p11-kit \
+    --with-default-trust-store-pkcs11="pkcs11:model=p11-kit-trust;manufacturer=PKCS%2311%20Kit" \
+%else
+    --without-p11-kit \
+%endif
+%if 0%{?rhel} && 0%{?rhel} < 7
+    --with-included-libtasn1 \
 %endif
 %if %{with dane}
-           --with-unbound-root-key-file=/var/lib/unbound/root.key \
-           --enable-dane \
+    --with-unbound-root-key-file=/var/lib/unbound/root.key \
+    --enable-dane \
 %endif
-           --disable-rpath
+    --disable-rpath \
+    --with-default-priority-string="@SYSTEM"
 
-%make_build V=1
+%make_build
+
+%if %{with fips}
+%define __spec_install_post \
+	%{?__debug_package:%{__debug_install_post}} \
+	%{__arch_install_post} \
+	%{__os_install_post} \
+	fipshmac -d $RPM_BUILD_ROOT%{_libdir} $RPM_BUILD_ROOT%{_libdir}/libgnutls.so.30.*.* \
+	file=`basename $RPM_BUILD_ROOT%{_libdir}/libgnutls.so.30.*.hmac` && mv $RPM_BUILD_ROOT%{_libdir}/$file $RPM_BUILD_ROOT%{_libdir}/.$file && ln -s .$file $RPM_BUILD_ROOT%{_libdir}/.libgnutls.so.30.hmac \
+%{nil}
+%endif
 
 %install
 %make_install
+make -C doc install-html DESTDIR=$RPM_BUILD_ROOT
+rm -f $RPM_BUILD_ROOT%{_infodir}/dir
+rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.a
+rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
 
-%{__install} -d $RPM_BUILD_ROOT%{_includedir}/%{name}
-%{__mv} $RPM_BUILD_ROOT%{_includedir}/gnutls $RPM_BUILD_ROOT%{_includedir}/%{name}/
-%{__install} -d $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-%{__mv} $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-%{__sed} -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls.pc
-#%%{__sed} -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/nettle.pc
-#%%{__sed} -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/hogweed.pc
+mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
+mv $RPM_BUILD_ROOT%{_includedir}/gnutls $RPM_BUILD_ROOT%{_includedir}/%{name}/
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls.pc
+#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/nettle.pc
+#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/hogweed.pc
 
 # Rename or delete bin files to avoid conflicts with base packages
-#%%{__mv} $RPM_BUILD_ROOT%{_infodir}/nettle.info $RPM_BUILD_ROOT%{_infodir}/nettle-3.2.info
-%{__rm} -f $RPM_BUILD_ROOT%{_bindir}/srptool
-%{__rm} -f $RPM_BUILD_ROOT%{_bindir}/gnutls-srpcrypt
-#%%{__cp} -f %{SOURCE1} $RPM_BUILD_ROOT/%{_bindir}/libgnutls-config
-%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
-%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man1/srptool.1
-#%%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
-#%%{__rm} -f $RPM_BUILD_ROOT%{_infodir}/dir
+#mv $RPM_BUILD_ROOT%{_infodir}/nettle.info $RPM_BUILD_ROOT%{_infodir}/nettle-3.2.info
+#cp -f %{SOURCE1} $RPM_BUILD_ROOT/%{_bindir}/libgnutls-config
+# rm -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
+# rm -f $RPM_BUILD_ROOT%{_infodir}/dir
 # all 
-%{__rm} -f $RPM_BUILD_ROOT%{_mandir}/man3/*
-%{__rm} -f $RPM_BUILD_ROOT%{_infodir}/*
-%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/*.la
-%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.a
-%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
-%{__rm} -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
+rm $RPM_BUILD_ROOT%{_mandir}/man3/*
+rm $RPM_BUILD_ROOT%{_infodir}/*
 %if %{with dane}
-%{__mv} $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-%{__sed} -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls-dane.pc
+mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls-dane.pc
 %else
-%{__rm} -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
+rm -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
 %endif
 
-#%%{__install} -d $RPM_BUILD_ROOT/etc/ld.so.conf.d/
-#%%{__install} %%{SOURCE3} $RPM_BUILD_ROOT/etc/ld.so.conf.d/compat-gnutls34.conf
 
 %find_lang gnutls
-%{__rm} -f $RPM_BUILD_ROOT/usr/share/locale/*/LC_MESSAGES/gnutls.mo
-
-# Set up symlinks to deault use compat version of gnutls
-echo %{__ln_s} -f %{name}/gnutls $RPM_BUILD_ROOT%{_includedir}/gnutls
-%{__ln_s} -f %{name}/gnutls $RPM_BUILD_ROOT%{_includedir}/gnutls
 
 %check
 make check %{?_smp_mflags}
@@ -247,14 +286,18 @@ make check %{?_smp_mflags}
 %post c++ -p /sbin/ldconfig
 %postun c++ -p /sbin/ldconfig
 
+%if %{with guile}
 %post guile -p /sbin/ldconfig
 %postun guile -p /sbin/ldconfig
+%endif
 
-#files -f gnutls.lang
-#/etc/ld.so.conf.d/compat-gnutls34.conf
-%files
+%files -f gnutls.lang
 %{_libdir}/libgnutls.so.30*
-%doc COPYING README AUTHORS
+%if %{with fips}
+%{_libdir}/.libgnutls.so.30*.hmac
+%endif
+%doc README.md AUTHORS NEWS THANKS
+%license LICENSE doc/COPYING doc/COPYING.LESSER
 
 %files c++
 %{_libdir}/libgnutlsxx.so.*
@@ -264,17 +307,18 @@ make check %{?_smp_mflags}
 %{_includedir}/%{name}/gnutls/*.h
 %{_libdir}/libgnutls*.so
 %dir %{_libdir}/%{name}
+%if %{with fips}
+%{_libdir}/.libgnutls.so.*.hmac
+%endif
 %{_libdir}/%{name}/pkgconfig/*.pc
-# Symlink for default compilation of compat release
-%{_includedir}/gnutls
-#/usr/gnutls34/share/*
+%{_docdir}/%{name}/*
 #{_mandir}/man3/*
 #{_infodir}/*
 
 %files utils
 %{_bindir}/*
-%doc doc/certtool.cfg
 %{_mandir}/man1/*
+#doc doc/certtool.cfg
 
 %if %{with dane}
 %files dane
@@ -291,11 +335,8 @@ make check %{?_smp_mflags}
 %endif
 
 %changelog
-* Sat Sep 5 2020 Nico Kadel-Garcia <nkadel@gmail.com> - 3.4.17-0.2
-- Add symlink at /usr/include/gnutls to provide consistent compilation
-  for Samba
-- Add Conflicts gnutls-devel
-= Use __rm, __sed, and __install consistently
+* Tue Sep 15 2020 Sérgio Basto <sergio@serjux.com> - 3.6.8-12
+- 3.6.8-11 compat- style
 
 * Fri Aug 28 2020 Sérgio Basto <sergio@serjux.com> - 3.4.17-7
 - Add patches for GNUTLS-SA-2017-4/CVE-2017-7507
