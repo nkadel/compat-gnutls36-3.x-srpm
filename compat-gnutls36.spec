@@ -106,7 +106,8 @@ Requires: %{name}-dane%{?_isa} = %{version}-%{release}
 Requires: pkgconfig
 Requires: libtasn1-devel >= 4.3
 Requires: libidn-devel
-Requires: nettle-devel >= 3.4.1
+#Requires: nettle-devel >= 3.4.1
+Requires: compat-nettle34-devel >= 3.4.1
 Requires(post): /sbin/install-info
 Requires(preun): /sbin/install-info
 # Handle compat packaging
