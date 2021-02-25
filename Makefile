@@ -6,7 +6,8 @@
 LANG=C
 
 # Requires compat-nettle32
-MOCKS+=samba4repo-7-x86_64
+#MOCKS+=samba4repo-7-x86_64
+MOCKS+=samba4repo-amz2-x86_64
 
 MOCKCFGS+=$(MOCKS)
 
@@ -56,7 +57,7 @@ install:: $(MOCKS)
 	@for repo in $(MOCKS); do \
 	    echo Installing $$repo; \
 	    case $$repo in \
-		amazonlinux-2-x86_64) yumrelease=amazon/2; yumarch=x86_64; ;; \
+		amazonlinux-2-x86_64) yumrelease=amz/2; yumarch=x86_64; ;; \
 		*-amz2-x86_64) yumrelease=amazon/2; yumarch=x86_64; ;; \
 		*-7-x86_64) yumrelease=el/7; yumarch=x86_64; ;; \
 		*-8-x86_64) yumrelease=el/8; yumarch=x86_64; ;; \
