@@ -34,7 +34,12 @@ BuildRequires: readline-devel
 BuildRequires: libtasn1-devel >= 4.3
 #BuildRequires: libtool automake autoconf texinfo
 BuildRequires: autogen-libopts-devel >= 5.18 autogen
+%if 0%{?rhel} == 7
+BuildRequires: compat-nettle34-devel >= 3.4.1
+BuildRequires: compat-nettle34 >= 3.4.1
+%else
 BuildRequires: pkgconfig(nettle) >= 3.4.1
+%endif
 BuildRequires: pkgconfig(hogweed) >= 3.4.1
 BuildRequires: gmp-devel > 1:6.1.0
 BuildRequires: trousers-devel >= 0.3.11.2
@@ -56,7 +61,11 @@ BuildRequires: ca-certificates
 Requires: p11-kit-trust
 
 Requires: libtasn1 >= 4.3
+%if 0%{?rhel} == 7
+Requires: compat-nettle34 >= 3.4.1
+%else
 Requires: nettle >= 3.4.1
+%endif
 Requires: trousers >= 0.3.11.2
 Requires: gmp >= 1:6.1.0
 
@@ -367,6 +376,9 @@ fi
 %endif
 
 %changelog
+* Wed Aug 25 2021 Nico Kadel-Garcia <nkadel@gmail.com> - 3.6.15-0.3
+- Set Requires to use compat-nettle34 directly
+
 * Tue Sep 29 2020 Sérgio Basto <sergio@serjux.com> - 3.6.15-3
 - Follow Centos 8-stream
 
