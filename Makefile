@@ -56,10 +56,12 @@ install:: $(MOCKS)
 	@for repo in $(MOCKS); do \
 	    echo Installing $$repo; \
 	    case $$repo in \
+		amazonlinux-2-x86_64) yumrelease=amazon/2; yumarch=x86_64; ;; \
+		*-amz2-x86_64) yumrelease=amazon/2; yumarch=x86_64; ;; \
 		*-7-x86_64) yumrelease=el/7; yumarch=x86_64; ;; \
 		*-8-x86_64) yumrelease=el/8; yumarch=x86_64; ;; \
-		*-32-x86_64) yumrelease=fedora/32; yumarch=x86_64; ;; \
-		*-f32-x86_64) yumrelease=fedora/32; yumarch=x86_64; ;; \
+		*-34-x86_64) yumrelease=fedora/34; yumarch=x86_64; ;; \
+		*-f34-x86_64) yumrelease=fedora/34; yumarch=x86_64; ;; \
 		*-rawhide-x86_64) yumrelease=fedora/rawhide; yumarch=x86_64; ;; \
 		*) echo "Unrecognized release for $$repo, exiting" >&2; exit 1; ;; \
 	    esac; \
@@ -67,10 +69,10 @@ install:: $(MOCKS)
 	    srpmdir=$(REPOBASEDIR)/$$yumrelease/SRPMS; \
 	    echo "Pushing SRPMS to $$srpmdir"; \
 	    rsync -av $$repo/*.src.rpm --no-owner --no-group $$repo/*.src.rpm $$srpmdir/. || exit 1; \
-	    createrepo -q $$srpmdir/.; \
+	    createrepo_c -q $$srpmdir/.; \
 	    echo "Pushing RPMS to $$rpmdir"; \
 	    rsync -av $$repo/*.rpm --exclude=*.src.rpm --exclude=*debuginfo*.rpm --no-owner --no-group $$repo/*.rpm $$rpmdir/. || exit 1; \
-	    createrepo -q $$rpmdir/.; \
+	    createrepo_c -q $$rpmdir/.; \
 	done
 	@for repo in $(MOCKCFGS); do \
 	    echo "Touching $(PWD)/../$$repo.cfg"; \
