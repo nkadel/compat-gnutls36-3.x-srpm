@@ -13,7 +13,7 @@
 
 Name: compat-gnutls36
 Version: 3.6.8
-Release: 0.1%{?dist}
+Release: 0.2%{?dist}
 Summary: A TLS protocol implementation
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
@@ -217,7 +217,10 @@ echo "SYSTEM=NORMAL" >> tests/system.prio
 #export CCASFLAGS
 #rm -rf build-aux/ m4/
 #autoreconf -i
+
 autoreconf -v
+# Added to ensure correct compat-nettle34
+PKG_CONFIG_PATH="%{_libdir}/compat-nettle34/pkgconfig:$PKG_CONFIG_PATH" 
 %configure \
     --disable-static \
 %if %{with fips}
@@ -355,6 +358,10 @@ make check %{?_smp_mflags}
 %endif
 
 %changelog
+* Fri Aug 27 2021 Nico Kadel-Garcia <nkadwl@gmail.com> - 3.6.8-0.2
+- Add PKG_CONFIG_PATH to %%setup stage
+- Require compat-nettle34 and compat-nettle34-devel, rather than nettle versions
+
 * Tue Sep 15 2020 Sérgio Basto <sergio@serjux.com> - 3.6.8-12
 - 3.6.8-11 compat- style
 
