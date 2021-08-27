@@ -34,8 +34,9 @@ BuildRequires: readline-devel
 BuildRequires: libtasn1-devel >= 4.3
 #BuildRequires: libtool automake autoconf texinfo
 BuildRequires: autogen-libopts-devel >= 5.18 autogen
-BuildRequires: pkgconfig(nettle) >= 3.4.1
-BuildRequires: pkgconfig(hogweed) >= 3.4.1
+BuildRequires: compat-nettle34-devel >= 3.4.1
+#BuildRequires: pkgconfig(nettle) >= 3.4.1
+#BuildRequires: pkgconfig(hogweed) >= 3.4.1
 BuildRequires: gmp-devel > 1:6.1.0
 BuildRequires: trousers-devel >= 0.3.11.2
 BuildRequires: libidn2-devel
@@ -56,7 +57,8 @@ BuildRequires: ca-certificates
 Requires: p11-kit-trust
 
 Requires: libtasn1 >= 4.3
-Requires: nettle >= 3.4.1
+#Requires: nettle >= 3.4.1
+Requires: compat-nettle34 >= 3.4.1
 Requires: trousers >= 0.3.11.2
 Requires: gmp >= 1:6.1.0
 
