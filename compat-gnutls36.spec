@@ -1,9 +1,7 @@
-# gnutls-3.6.10 should need gmp-6.1 to solve undefined reference to `mpn_zero_p'
 %bcond_without dane
 %if 0%{?rhel}
 %bcond_with guile
 %bcond_with p11kit
-# checks do not work correctly underl rhel
 %bcond_with checks
 %else
 %bcond_without guile
@@ -13,10 +11,12 @@
 %bcond_without fips
 
 %global realname gnutls
+%global suffix_ver 3.6
 
 Name: compat-gnutls36
-Version: 3.6.8
-Release: 0.2%{?dist}
+Version: 3.6.15
+#Release: 4%%{?dist}
+Release: 0.4%{?dist}
 Summary: A TLS protocol implementation
 # The libraries are LGPLv2.1+, utilities are GPLv3+
 License: GPLv3+ and LGPLv2+
@@ -24,38 +24,20 @@ Group: System Environment/Libraries
 URL: http://www.gnutls.org/
 Source0: ftp://ftp.gnutls.org/gcrypt/gnutls/v3.6/%{realname}-%{version}.tar.xz
 Source1: ftp://ftp.gnutls.org/gcrypt/gnutls/v3.6/%{realname}-%{version}.tar.xz.sig
-#Source2: gpgkey-1F42418905D8206AA754CCDC29EE58B996865171.gpg
+Source2: gpgkey-462225C3B46F34879FC8496CD605848ED7E69871.gpg
 Patch1:	gnutls-3.2.7-rpath.patch
 Patch2: gnutls-3.6.4-no-now-guile.patch
-Patch3: gnutls-3.6.5-fix-fips-signature-post.patch
-Patch4: gnutls-3.6.8-fips-aes-cbc-kat.patch
-# need --disable-tests
-#Patch5: gnutls-3.6.8-multiple-key-updates.patch
-Patch6: gnutls-3.6.8-fips-rng-continuous.patch
-Patch7: gnutls-3.6.8-session-ticket-ub.patch
-# need --disable-tests
-#Patch8: gnutls-3.6.8-pkcs11-login-error.patch
-# depends on patch8
-#Patch9: gnutls-3.6.8-fips-deterministic-ecdsa.patch
-# depends on patch8
-#Patch10: gnutls-3.6.8-aead-cipher-encryptv2.patch
-# depends on patch8
-#Patch11: gnutls-3.6.8-fips-rsa-random-selftests.patch
-# depends on patch8
-#Patch12: gnutls-3.6.8-decr-len.patch
-# depends on patch8
-#Patch13: gnutls-3.6.8-fix-aead-cipher-encryptv2.patch
-Patch14: gnutls-3.6.8-fix-cfb8-decrypt.patch
-Patch15: gnutls-3.6.12-dtls-random.patch
-Patch16: gnutls-3.6.14-totp-init.patch
 
 BuildRequires: p11-kit-devel >= 0.21.3
 BuildRequires: gettext-devel
-BuildRequires: zlib-devel readline-devel libtasn1-devel >= 4.3
+BuildRequires: libtasn1-devel >= 4.3
+BuildRequires: readline-devel
+BuildRequires: zlib-devel
 #BuildRequires: libtool automake autoconf texinfo
 BuildRequires: autogen-libopts-devel >= 5.18 autogen
 BuildRequires: pkgconfig(nettle) >= 3.4.1
 BuildRequires: pkgconfig(hogweed) >= 3.4.1
+BuildRequires: gmp-devel > 1:6.1.0
 BuildRequires: trousers-devel >= 0.3.11.2
 BuildRequires: libidn2-devel
 BuildRequires: libunistring-devel
@@ -73,9 +55,11 @@ BuildRequires: fipscheck
 BuildRequires: p11-kit-trust
 BuildRequires: ca-certificates
 Requires: p11-kit-trust
+
 Requires: libtasn1 >= 4.3
-#Requires: nettle >= 3.4.1
+Requires: compat-nettle34 >= 3.4.1
 Requires: trousers >= 0.3.11.2
+Requires: gmp >= 1:6.1.0
 
 %if %{with dane}
 BuildRequires: unbound-devel
@@ -88,15 +72,16 @@ BuildRequires: guile-devel
 Provides: bundled(gnulib) = 20130424
 
 # Handle compat packaging
-Provides: compat34 = %{version}-release
-Obsoletes: compat34 < %{version}-release
+Provides: compat-gnutls34 = %{version}-%{release}
+Obsoletes: compat-gnutls34 < %{version}-%{release}
+Provides: gnutls = %{version}-%{release}
 
 %package c++
 Summary: The C++ interface to GnuTLS
 Requires: %{name}%{?_isa} = %{version}-%{release}
 # Handle compat packaging
-Provides: compat34-c++ = %{version}-release
-Obsoletes: compat34-c++ < %{version}-release
+Provides: compat-gnutls34-c++ = %{version}-%{release}
+Obsoletes: compat-gnutls34-c++ < %{version}-%{release}
 
 %package devel
 Summary: Development files for the %{name} package
@@ -109,12 +94,14 @@ Requires: %{name}-dane%{?_isa} = %{version}-%{release}
 Requires: pkgconfig
 Requires: libtasn1-devel >= 4.3
 Requires: libidn-devel
-Requires: nettle-devel >= 3.4.1
+Requires: pkgconfig(nettle) >= 3.4.1
+Requires: pkgconfig(hogweed) >= 3.4.1
+Requires: gmp-devel >= 1:6.1.0
 Requires(post): /sbin/install-info
 Requires(preun): /sbin/install-info
 # Handle compat packaging
-Provides: compat34-devel = %{version}-release
-Obsoletes: compat34-devel < %{version}-release
+Provides: compat-gnutls34-devel = %{version}-%{release}
+Obsoletes: compat-gnutls34-devel < %{version}-%{release}
 
 %package utils
 License: GPLv3+
@@ -125,16 +112,16 @@ Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: %{name}-dane%{?_isa} = %{version}-%{release}
 %endif
 # Handle compat packaging
-Provides: compat34-utils = %{version}-release
-Obsoletes: compat34-utils < %{version}-release
+Provides: compat-gnutls34-utils = %{version}-%{release}
+Obsoletes: compat-gnutls34-utils < %{version}-%{release}
 
 %if %{with dane}
 %package dane
 Summary: A DANE protocol implementation for GnuTLS
 Requires: %{name}%{?_isa} = %{version}-%{release}
 # Handle compat packaging
-Provides: compat34-dane = %{version}-release
-Obsoletes: compat34-dane < %{version}-release
+Provides: compat-gnutls34-dane = %{version}-%{release}
+Obsoletes: compat-gnutls34-dane < %{version}-%{release}
 %endif
 
 %if %{with guile}
@@ -144,8 +131,8 @@ Group: Development/Libraries
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: guile
 # Handle compat packaging
-Provides: compat34-guile = %{version}-release
-Obsoletes: compat34-guile < %{version}-release
+Provides: compat-gnutls34-guile = %{version}-%{release}
+Obsoletes: compat-gnutls34-guile < %{version}-%{release}
 %endif
 
 %description
@@ -202,7 +189,7 @@ This package contains Guile bindings for the library.
 %endif
 
 %prep
-#gpgv2 --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
+gpgv2 --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
 
 %autosetup -p1 -n %{realname}-%{version}
 
@@ -216,22 +203,26 @@ echo "SYSTEM=NORMAL" >> tests/system.prio
 # via the crypto policies
 
 %build
+
 #CCASFLAGS="$CCASFLAGS -Wa,--generate-missing-build-notes=yes"
 #export CCASFLAGS
 #rm -rf build-aux/ m4/
 #autoreconf -i
+#autoreconf -v
+#configure \
+#if 0%{?rhel} && 0%{?rhel} < 7
+#    --with-included-libtasn1 \
+#endif
 
-autoreconf -v
-# Added to ensure correct compat-nettle34
-export PKG_CONFIG_PATH="%{_libdir}/compat-nettle34/pkgconfig:$PKG_CONFIG_PATH" 
-%configure \
-    --disable-static \
+%configure --with-libtasn1-prefix=%{_prefix} \
 %if %{with fips}
     --enable-fips140-mode \
 %endif
+    --enable-tls13-support \
     --enable-sha1-support \
-    --disable-non-suiteb-curves \
+    --disable-static \
     --disable-openssl-compatibility \
+    --disable-non-suiteb-curves \
     --with-system-priority-file=%{_sysconfdir}/crypto-policies/back-ends/gnutls.config \
     --with-trousers-lib=%{_libdir}/libtspi.so.1 \
     --htmldir=%{_docdir}/%{name} \
@@ -245,9 +236,6 @@ export PKG_CONFIG_PATH="%{_libdir}/compat-nettle34/pkgconfig:$PKG_CONFIG_PATH"
     --with-default-trust-store-pkcs11="pkcs11:model=p11-kit-trust;manufacturer=PKCS%2311%20Kit" \
 %else
     --without-p11-kit \
-%endif
-%if 0%{?rhel} && 0%{?rhel} < 7
-    --with-included-libtasn1 \
 %endif
 %if %{with dane}
     --with-unbound-root-key-file=/var/lib/unbound/root.key \
@@ -277,35 +265,45 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
 
-mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
-mv $RPM_BUILD_ROOT%{_includedir}/gnutls $RPM_BUILD_ROOT%{_includedir}/%{name}/
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls.pc
-#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/nettle.pc
-#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/hogweed.pc
-
-# Rename or delete bin files to avoid conflicts with base packages
-#mv $RPM_BUILD_ROOT%{_infodir}/nettle.info $RPM_BUILD_ROOT%{_infodir}/nettle-3.2.info
-#cp -f %{SOURCE1} $RPM_BUILD_ROOT/%{_bindir}/libgnutls-config
-# rm -f $RPM_BUILD_ROOT%{_mandir}/man3/*srp*
-# rm -f $RPM_BUILD_ROOT%{_infodir}/dir
-# all 
-rm $RPM_BUILD_ROOT%{_mandir}/man3/*
-rm $RPM_BUILD_ROOT%{_infodir}/*
 %if %{with dane}
-mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
-sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls-dane.pc
+# For Transaction check error:
+#  file /usr/lib64/libgnutls-dane.so.0 from install of gnutls-dane-3.3.29-9.el7_6.x86_64 conflicts with file from package compat-gnutls36-dane-3.6.8-13.el7.x86_64
+#  file /usr/bin/danetool from install of gnutls-utils-3.3.29-9.el7_6.x86_64 conflicts with file from package compat-gnutls36-utils-3.6.8-13.el7.x86_64
+#  file /usr/share/man/man1/danetool.1.gz from install of gnutls-utils-3.3.29-9.el7_6.x86_64 conflicts with file from package compat-gnutls36-utils-3.6.8-13.el7.x86_64
+rm $RPM_BUILD_ROOT%{_libdir}/libgnutls-dane.so.0
+mv $RPM_BUILD_ROOT%{_bindir}/danetool $RPM_BUILD_ROOT%{_bindir}/danetool-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_mandir}/man1/danetool.1 $RPM_BUILD_ROOT%{_mandir}/man1/danetool-%{suffix_ver}.1
 %else
 rm -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
 %endif
 
+# Rename some files to avoid conflicts with base packages
+mv $RPM_BUILD_ROOT%{_bindir}/certtool $RPM_BUILD_ROOT%{_bindir}/certtool-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_bindir}/gnutls-cli $RPM_BUILD_ROOT%{_bindir}/gnutls-cli-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_bindir}/gnutls-cli-debug $RPM_BUILD_ROOT%{_bindir}/gnutls-cli-debug-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_bindir}/gnutls-serv $RPM_BUILD_ROOT%{_bindir}/gnutls-serv-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_bindir}/ocsptool $RPM_BUILD_ROOT%{_bindir}/ocsptool-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_bindir}/psktool $RPM_BUILD_ROOT%{_bindir}/psktool-%{suffix_ver}
+mv $RPM_BUILD_ROOT%{_mandir}/man1/certtool.1 $RPM_BUILD_ROOT%{_mandir}/man1/certtool-%{suffix_ver}.1
+mv $RPM_BUILD_ROOT%{_mandir}/man1/gnutls-cli.1 $RPM_BUILD_ROOT%{_mandir}/man1/gnutls-cli-%{suffix_ver}.1
+mv $RPM_BUILD_ROOT%{_mandir}/man1/gnutls-cli-debug.1 $RPM_BUILD_ROOT%{_mandir}/man1/gnutls-cli-debug-%{suffix_ver}.1
+mv $RPM_BUILD_ROOT%{_mandir}/man1/gnutls-serv.1 $RPM_BUILD_ROOT%{_mandir}/man1/gnutls-serv-%{suffix_ver}.1
+mv $RPM_BUILD_ROOT%{_mandir}/man1/ocsptool.1 $RPM_BUILD_ROOT%{_mandir}/man1/ocsptool-%{suffix_ver}.1
+mv $RPM_BUILD_ROOT%{_mandir}/man1/psktool.1 $RPM_BUILD_ROOT%{_mandir}/man1/psktool-%{suffix_ver}.1
 
-%find_lang gnutls
+rm $RPM_BUILD_ROOT%{_mandir}/man1/p11tool.1
+rm $RPM_BUILD_ROOT%{_mandir}/man1/tpmtool.1
 
+# remove locale files because they cause conflicts with base package
+#find_lang gnutls
+rm -rf $RPM_BUILD_ROOT%{_datadir}/locale/
+
+# Checks fail because of unexpected location
 %if %{with checks}
+%ifarch x86_64
 %check
 make check %{?_smp_mflags}
+%endif
 %endif
 
 %post -p /sbin/ldconfig
@@ -319,7 +317,17 @@ make check %{?_smp_mflags}
 %postun guile -p /sbin/ldconfig
 %endif
 
-%files -f gnutls.lang
+%post devel
+if [ -f %{_infodir}/gnutls.info.gz ]; then
+    /sbin/install-info %{_infodir}/gnutls.info.gz %{_infodir}/dir || :
+fi
+
+%preun devel
+if [ $1 = 0 -a -f %{_infodir}/gnutls.info.gz ]; then
+   /sbin/install-info --delete %{_infodir}/gnutls.info.gz %{_infodir}/dir || :
+fi
+
+%files
 %{_libdir}/libgnutls.so.30*
 %if %{with fips}
 %{_libdir}/.libgnutls.so.30*.hmac
@@ -332,16 +340,15 @@ make check %{?_smp_mflags}
 
 %files devel
 #/usr/gnutls/bin/libgnutls*-config
-%{_includedir}/%{name}/gnutls/*.h
+%{_includedir}/gnutls/*.h
 %{_libdir}/libgnutls*.so
-%dir %{_libdir}/%{name}
 %if %{with fips}
 %{_libdir}/.libgnutls.so.*.hmac
 %endif
-%{_libdir}/%{name}/pkgconfig/*.pc
+%{_libdir}/pkgconfig/*.pc
 %{_docdir}/%{name}/*
-#{_mandir}/man3/*
-#{_infodir}/*
+%{_infodir}/*
+%{_mandir}/man3/*
 
 %files utils
 %{_bindir}/*
@@ -363,10 +370,27 @@ make check %{?_smp_mflags}
 %endif
 
 %changelog
-* Fri Aug 27 2021 Nico Kadel-Garcia <nkadwl@gmail.com> - 3.6.8-0.2
-- Add PKG_CONFIG_PATH to %%setup stage
-- Require compat-nettle34 and compat-nettle34-devel, rather than nettle versions
-- Disable checks for RHEL 7 compilation
+
+* Mon Oct 05 2020 Sérgio Basto <sergio@serjux.com> - 3.6.15-4
+- Remove enable-intel-cet.patch because is not official and could give many work
+
+* Tue Sep 29 2020 Sérgio Basto <sergio@serjux.com> - 3.6.15-3
+- Follow Centos 8-stream
+
+* Fri Sep 25 2020 Sérgio Basto <sergio@serjux.com> - 3.6.15-2
+- Some packaging fixes
+
+* Thu Sep 24 2020 Sérgio Basto <sergio@serjux.com> - 3.6.15-1
+- Update to 3.6.15
+- gnutls-3.6.10 or later need gmp-6.1 to solve undefined reference to 'mpn_zero_p'
+  gmp-6.1.2 hopefully is 100% backward compatible to 6.0.0
+  https://abi-laboratory.pro/?view=timeline&l=gmp
+
+* Wed Sep 23 2020 Sérgio Basto <sergio@serjux.com> - 3.6.8-13
+- Devel package back to default location, as cannot be installed along
+  gnutls-devel from system
+- Remove gnutls translations /usr/share/locale/cs/LC_MESSAGES/gnutls.mo
+  to avoid conflicts with system package
 
 * Tue Sep 15 2020 Sérgio Basto <sergio@serjux.com> - 3.6.8-12
 - 3.6.8-11 compat- style
@@ -376,7 +400,7 @@ make check %{?_smp_mflags}
 
 * Fri Oct 25 2019 Sérgio Basto <sergio@serjux.com> - 3.4.17-6
 - compat-gnutls34-devel need requires compat-nettle32-devel or else pkg-config
-  gnutls won't work
+  gnutls will not work
 
 * Thu Feb 21 2019 Sérgio Basto <sergio@serjux.com> - 3.4.17-5
 - Devel package need libtasn1-devel, libtasn1-devel, libidn-devel
@@ -446,7 +470,7 @@ make check %{?_smp_mflags}
 - fixes issue in gnutls_x509_privkey_import (#1250020)
 
 * Mon Jul 13 2015 Nikos Mavrogiannopoulos <nmav@redhat.com> 3.4.3-2
-- Don't link against trousers but rather dlopen() it when available.
+- Do not link against trousers but rather dlopen() it when available.
   That avoids a dependency on openssl by the main library.
 
 * Mon Jul 13 2015 Nikos Mavrogiannopoulos <nmav@redhat.com> 3.4.3-1
@@ -591,7 +615,7 @@ make check %{?_smp_mflags}
 
 * Mon Nov 25 2013 Nikos Mavrogiannopoulos <nmav@redhat.com> 3.2.7-1
 - new upstream release
-- added dependency to autogen-libopts-devel to use the system's
+- added dependency to autogen-libopts-devel to use the system
   libopts library
 - added dependency to trousers-devel to enable TPM support
 
@@ -626,7 +650,7 @@ make check %{?_smp_mflags}
 - drop the temporary old library
 
 * Tue Feb 26 2013 Tomas Mraz <tmraz@redhat.com> 3.1.8-2
-- don't send ECC algos as supported (#913797)
+- do not send ECC algos as supported (#913797)
 
 * Thu Feb 21 2013 Tomas Mraz <tmraz@redhat.com> 3.1.8-1
 - new upstream version
