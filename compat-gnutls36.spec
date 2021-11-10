@@ -1,4 +1,8 @@
-%bcond_without dane
+#%%bcond_without dane
+
+# Turn off dane for compatibility package
+%bcond_with dane
+
 %if 0%{?rhel}
 %bcond_with guile
 %bcond_with p11kit
@@ -214,6 +218,7 @@ echo "SYSTEM=NORMAL" >> tests/system.prio
 #    --with-included-libtasn1 \
 #endif
 
+export PKG_CONFIG_PATH="%{_libdir}/compat-nettle34/pkgconfig:$PKG_CONFIG_PATH" 
 %configure --with-libtasn1-prefix=%{_prefix} \
 %if %{with fips}
     --enable-fips140-mode \
@@ -265,6 +270,14 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/guile/2.0/guile-gnutls*.la
 rm -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
 
+mkdir -p $RPM_BUILD_ROOT%{_includedir}/%{name}
+mv $RPM_BUILD_ROOT%{_includedir}/gnutls $RPM_BUILD_ROOT%{_includedir}/%{name}/
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
+sed -r -i 's#^(includedir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/gnutls.pc
+#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/nettle.pc
+#sed -r -i 's#^(libdir=.*)#\1/%{name}#' $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/hogweed.pc
+
 %if %{with dane}
 # For Transaction check error:
 #  file /usr/lib64/libgnutls-dane.so.0 from install of gnutls-dane-3.3.29-9.el7_6.x86_64 conflicts with file from package compat-gnutls36-dane-3.6.8-13.el7.x86_64
@@ -273,6 +286,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/gnutls/libpkcs11mock1.*
 rm $RPM_BUILD_ROOT%{_libdir}/libgnutls-dane.so.0
 mv $RPM_BUILD_ROOT%{_bindir}/danetool $RPM_BUILD_ROOT%{_bindir}/danetool-%{suffix_ver}
 mv $RPM_BUILD_ROOT%{_mandir}/man1/danetool.1 $RPM_BUILD_ROOT%{_mandir}/man1/danetool-%{suffix_ver}.1
+mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/gnutls-dane.pc $RPM_BUILD_ROOT%{_libdir}/%{name}/pkgconfig/
 %else
 rm -f $RPM_BUILD_ROOT/%{_libdir}/pkgconfig/gnutls-dane.pc
 %endif
@@ -340,12 +354,12 @@ fi
 
 %files devel
 #/usr/gnutls/bin/libgnutls*-config
-%{_includedir}/gnutls/*.h
+%{_includedir}/%{name}/gnutls/*.h
 %{_libdir}/libgnutls*.so
 %if %{with fips}
 %{_libdir}/.libgnutls.so.*.hmac
 %endif
-%{_libdir}/pkgconfig/*.pc
+%{_libdir}/%{name}/pkgconfig/*.pc
 %{_docdir}/%{name}/*
 %{_infodir}/*
 %{_mandir}/man3/*
